@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base href="@@base@@" />
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="engine/main.css" />
+    <link rel="stylesheet" href="theme/copenhagen.css" />
+    <link rel="stylesheet" href="engine/katex/katex.min.css" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <style>
+    :root{
+--logo: /assets/logo.png;
+--darkaccent1color: #E1EBE3;
+--lightaccent1color: #6E9075;
+--accent2: #43aa8b;
+--accent3: #f9c74f;
+--accent4: #90be6d;
+--accent5: #f8961e;
+--accent6: #577590;
+--lighttitletextcolor: #ffffffe6;
+--darktitletextcolor: #000000b3;
+--lightbodytextcolor: #ffffffe6;
+--darkbodytextcolor: #000000b3;
+--lightbackgroundcolor: transparent;
+--darkbackgroundcolor: transparent;
+--bodyfont: Albert Sans;
+--titlefont: Albert Sans;
+} 
+
+    </style>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="engine/print.css"
+      media="print"
+    />
+  </head>
+
+  <body class="responsive">
+    <div class="reveal">
+      <div class="slides"><section class="variable-size-headings has-footer light cover-container present has-light-background fitted" data-background-color="#d3e9d8" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-cover" style="width: 100%; font-size: 1rem;">
+        <div style=""><h1 id="tedana">tedana</h1>
+
+<h3 id="analysisofecho-timedependentfmridata">Analysis of echo-time dependent fMRI data</h3>
+
+<p><em>Eneko Uruñuela - Signal Processing in Neuroimaging lab (BCBL)</em></p></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">1</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light default-container present has-light-background fitted" data-background-color="#d0e5d7" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="outline">Outline</h4>
+
+<p><br></p>
+
+<ul>
+<li>Introduction to multi-echo fMRI</li>
+<li>Multi-echo fMRI for noise removal</li>
+<li>tedana: the software</li>
+<li>tedana: the community</li>
+<li>Challenges developing tedana</li>
+<li>Contributing to tedana</li>
+</ul></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">2</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light default-container present has-light-background fitted" data-background-color="#cee2d7" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="whatismulti-echofmri">What is multi-echo fMRI</h4></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">3</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light default-container present has-light-background fitted" data-background-color="#cbded7" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="signaldecay">Signal decay</h4>
+
+<p><br></p>
+
+<p style="width: 100%;"><span class="math katex-rendered"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>S</mi><mo stretchy="false">(</mo><mi>t</mi><mo separator="true">,</mo><mi>T</mi><msub><mi>E</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo>=</mo><mover accent="true"><mi>S</mi><mo>ˉ</mo></mover><mo stretchy="false">(</mo><mi>T</mi><msub><mi>E</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo>⋅</mo><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mfrac><mrow><mi mathvariant="normal">Δ</mi><msub><mi>S</mi><mn>0</mn></msub><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow><msub><mover accent="true"><mi>S</mi><mo>ˉ</mo></mover><mn>0</mn></msub></mfrac><mo>−</mo><mi mathvariant="normal">Δ</mi><msubsup><mi>R</mi><mn>2</mn><mo>∗</mo></msubsup><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>⋅</mo><mi>T</mi><msub><mi>E</mi><mi>k</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">S(t, TE_k) = \bar{S}(TE_k) \cdot (1 + \frac{{\Delta}{S_0}(t)}{\bar{S}_0} - {\Delta}{R_2^*}(t) \cdot TE_k)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mpunct">,</span><span class="mspace" style="margin-right: 0.1667em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.0701em; vertical-align: -0.25em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8201em;"><span class="" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span></span><span class="" style="top: -3.2523em;"><span class="pstrut" style="height: 3em;"></span><span class="accent-body" style="left: -0.1667em;"><span class="mord">ˉ</span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 2.2871em; vertical-align: -0.8601em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 1.427em;"><span class="" style="top: -2.2899em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8201em;"><span class="" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span></span><span class="" style="top: -3.2523em;"><span class="pstrut" style="height: 3em;"></span><span class="accent-body" style="left: -0.1667em;"><span class="mord">ˉ</span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span><span class="" style="top: -3.23em;"><span class="pstrut" style="height: 3em;"></span><span class="frac-line" style="border-bottom-width: 0.04em;"></span></span><span class="" style="top: -3.677em;"><span class="pstrut" style="height: 3em;"></span><span class="mord"><span class="mord"><span class="mord">Δ</span></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.8601em;"><span class=""></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord"><span class="mord">Δ</span></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0077em;">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.7387em;"><span class="" style="top: -2.453em; margin-left: -0.0077em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span><span class="" style="top: -3.113em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.247em;"><span class=""></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></span></p>
+
+<p style="width: 100%;"><span class="math katex-rendered"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">Δ</mi><mi>S</mi><mo stretchy="false">(</mo><mi>T</mi><msub><mi>E</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mo>=</mo><mrow><mover accent="true"><mi>S</mi><mo>ˉ</mo></mover><mo stretchy="false">(</mo><mi>T</mi><msub><mi>E</mi><mi>k</mi></msub><mo stretchy="false">)</mo></mrow><mo>−</mo><mi mathvariant="normal">Δ</mi><msubsup><mi>R</mi><mn>2</mn><mo>∗</mo></msubsup><mo>⋅</mo><mi>T</mi><msub><mi>E</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">{\Delta}S(TE_k) = {\bar{S}(TE_k)} -{\Delta}{R_2^*}\cdot TE_k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 1em; vertical-align: -0.25em;"></span><span class="mord"><span class="mord">Δ</span></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right: 0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right: 0.2778em;"></span></span><span class="base"><span class="strut" style="height: 1.0701em; vertical-align: -0.25em;"></span><span class="mord"><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.8201em;"><span class="" style="top: -3em;"><span class="pstrut" style="height: 3em;"></span><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span></span><span class="" style="top: -3.2523em;"><span class="pstrut" style="height: 3em;"></span><span class="accent-body" style="left: -0.1667em;"><span class="mord">ˉ</span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span><span class="mclose">)</span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.9857em; vertical-align: -0.247em;"></span><span class="mord"><span class="mord">Δ</span></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0077em;">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.7387em;"><span class="" style="top: -2.453em; margin-left: -0.0077em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span><span class="" style="top: -3.113em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.247em;"><span class=""></span></span></span></span></span></span></span><span class="mspace" style="margin-right: 0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right: 0.2222em;"></span></span><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3361em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right: 0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></span></p></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">4</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#c9dbd7" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="multi-echogivesusinfoonhowtosplitt_2ands_0">Multi-echo gives us info on how to split <span class="math katex-rendered"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>T</mi><mn>2</mn><mo>∗</mo></msubsup></mrow><annotation encoding="application/x-tex">T_2^*</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9368em; vertical-align: -0.2481em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.6887em;"><span class="" style="top: -2.4519em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2481em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and <span class="math katex-rendered"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>S</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">S_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></h4></div>
+        <div style=""><div class="single-image-wrapper"><img src="images/t2star.gif" class=" size-contain position-center-center"></div><p></p>
+
+<div class="single-image-wrapper"><img src="images/s0.gif" class=" size-contain position-center-center"></div><p></p></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">5</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footnotes has-footer light default-container present has-light-background fitted" data-background-color="#cadad8" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="mostcommondenoisingapproachesformulti-echofmri">Most common denoising approaches for multi-echo fMRI</h4>
+
+<p><br></p>
+
+<h4 id="optimalcombinationofechoes12">Optimal combination of echoes <sup><a href="#fn1" id="fnr1" title="see footnote" class="footnote">1</a></sup><span class="math katex-rendered"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow></mrow><mo separator="true">,</mo></msup></mrow><annotation encoding="application/x-tex">^,</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4369em;"></span><span class="mord"><span class=""></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.4369em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mpunct mtight">,</span></span></span></span></span></span></span></span></span></span></span></span><sup><a href="#fn2" id="fnr2" title="see footnote" class="footnote">2</a></sup></h4>
+
+<ul>
+<li>Weighted average of echoes based on voxel-wise <span class="math katex-rendered"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>T</mi><mn>2</mn><mo>∗</mo></msubsup></mrow><annotation encoding="application/x-tex">T_2^*</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9368em; vertical-align: -0.2481em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.6887em;"><span class="" style="top: -2.4519em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2481em;"><span class=""></span></span></span></span></span></span></span></span></span></span> estimates</li>
+<li>Reduces thermal noise and weights towards <span class="math katex-rendered"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>T</mi><mn>2</mn><mo>∗</mo></msubsup></mrow><annotation encoding="application/x-tex">T_2^*</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9368em; vertical-align: -0.2481em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.6887em;"><span class="" style="top: -2.4519em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2481em;"><span class=""></span></span></span></span></span></span></span></span></span></span> signal</li>
+<li>Straightforward math &amp; reliable improvements</li>
+<li>Automatically calculated in AFNI, fMRIPrep &amp; tedana</li>
+</ul></div>
+      </div>
+      <div class="footnotes">
+<ol>
+
+<li id="fn1">
+<p><a href="https://doi.org/10.1002/(SICI)1522-2594(199907)42:1%3C87::AID-MRM13%3E3.0.CO;2-O">Posse et al., <em>Magnetic Resonance in Medicine.</em> (1999)</a> <a href="#fnr1" title="return to article" class="reversefootnote">↩︎</a></p>
+</li>
+
+<li id="fn2">
+<p><a href="https://doi.org/10.1002/mrm.20900">Poser et al., <em>Magnetic Resonance in Medicine.</em> (2006)</a> <a href="#fnr2" title="return to article" class="reversefootnote">↩︎</a></p>
+</li>
+
+</ol>
+</div>
+      <div class="footer"><div class="leading">6</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footnotes has-footer light default-container present has-light-background fitted" data-background-color="#ccd9da" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="mostcommondenoisingapproachesformulti-echofmri">Most common denoising approaches for multi-echo fMRI</h4>
+
+<p><br></p>
+
+<h4 id="denoisingtoactivelyseparatet_2ands_0">Denoising to actively separate <span class="math katex-rendered"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>T</mi><mn>2</mn><mo>∗</mo></msubsup></mrow><annotation encoding="application/x-tex">T_2^*</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.9368em; vertical-align: -0.2481em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.1389em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.6887em;"><span class="" style="top: -2.4519em; margin-left: -0.1389em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">∗</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.2481em;"><span class=""></span></span></span></span></span></span></span></span></span></span> and <span class="math katex-rendered"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>S</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">S_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.8333em; vertical-align: -0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right: 0.0576em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height: 0.3011em;"><span class="" style="top: -2.55em; margin-left: -0.0576em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height: 0.15em;"><span class=""></span></span></span></span></span></span></span></span></span></span></h4>
+
+<ul>
+<li>Based on ICA: ME-ICA <sup><a href="#fn1" id="fnr1" title="see footnote" class="footnote">1</a></sup><span class="math katex-rendered"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mrow></mrow><mo separator="true">,</mo></msup></mrow><annotation encoding="application/x-tex">^,</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height: 0.4369em;"></span><span class="mord"><span class=""></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height: 0.4369em;"><span class="" style="top: -3.063em; margin-right: 0.05em;"><span class="pstrut" style="height: 2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mpunct mtight">,</span></span></span></span></span></span></span></span></span></span></span></span><sup><a href="#fn2" id="fnr2" title="see footnote" class="footnote">2</a></sup> and tedana <sup><a href="#fn3" id="fnr3" title="see footnote" class="footnote">3</a></sup></li>
+<li>Multi-Echo Paradigm Free Mapping <sup><a href="#fn4" id="fnr4" title="see footnote" class="footnote">4</a></sup> (available in AFNI and pySPFM)</li>
+<li><a href="https://tedana.readthedocs.io/en/stable/multi-echo.html#other-software-that-uses-multi-echo-fmri">Other methods</a></li>
+</ul></div>
+      </div>
+      <div class="footnotes">
+<ol>
+
+<li id="fn1">
+<p><a href="https://doi.org/10.1016/j.neuroimage.2011.12.028">Kundu et al., * NeuroImage*. (2012)</a> <a href="#fnr1" title="return to article" class="reversefootnote">↩︎</a></p>
+</li>
+
+<li id="fn2">
+<p><a href="https://doi.org/10.1073/pnas.1301725110">Kundu et al., <em>PNAS.</em> (2013)</a> <a href="#fnr2" title="return to article" class="reversefootnote">↩︎</a></p>
+</li>
+
+<li id="fn3">
+<p><a href="https://doi.org/10.21105/joss.03669">DuPre, Salo et al., <em>JOSS.</em> (2021)</a> <a href="#fnr3" title="return to article" class="reversefootnote">↩︎</a></p>
+</li>
+
+<li id="fn4">
+<p><a href="https://doi.org/10.1016/j.neuroimage.2019.116081">Caballero-Gaudes et al., <em>NeuroImage.</em> (2019)</a> <a href="#fnr4" title="return to article" class="reversefootnote">↩︎</a></p>
+</li>
+
+</ol>
+</div>
+      <div class="footer"><div class="leading">7</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#ced8dc" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="denoisingwithica">Denoising with ICA</h4>
+
+<p><br></p>
+
+<ol>
+<li>Fit signal decay</li>
+<li>Optimal combination of echoes</li>
+<li>PCA to remove thermal noise</li>
+<li>Decomposition into independent components (ICA)</li>
+<li>Classification of components into BOLD-like (accepted) and non BOLD-like (rejected)</li>
+<li>Denoising</li>
+</ol></div>
+        <img src="images/tedana-workflow.webp" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">8</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#d0d7de" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="tedana:thesoftware">tedana: the software</h4>
+
+<p><br></p>
+
+<p><a href="https://elizabeth-dupre.com/">Elizabeth DuPre</a> started <a href="https://github.com/ME-ICA/tedana">tedana</a> in May 2018 to advance ME-ICA by <a href="https://www.ceretype.com/prantik-kundu">Prantik Kundu</a></p>
+
+<p>Approx. 20 contributors from various countries and institutions</p>
+
+<p>Monthly developer calls, a periodic newsletter, active issue board &amp; code updates</p></div>
+        <img src="images/tedana_contributors.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">9</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#d3d6df" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 0.813rem;">
+        <div style=""><h4 id="tedana:thesoftware">tedana: the software</h4>
+
+<p>Install:</p>
+
+<pre><code class="bash hljs">pip install tedana
+</code></pre>
+
+<p>Use from the command line:</p>
+
+<pre><code class="bash hljs">tedana -d echo_1.nii.gz echo_2.nii.gz echo_3.nii.gz echo_4.nii.gz -e 12 28 44 60 -
+</code></pre>
+
+<p>Or from a Python session:</p>
+
+<pre><code class="python hljs"><span class="hljs-keyword">from</span> tedana <span class="hljs-keyword">import</span> workflows
+workflows.tedana_workflow(
+    data_files,
+    echo_times,
+    out_dir=out_dir,
+    mask=mask_file,
+    prefix=<span class="hljs-string">"sub-04570_task-rest_space-scanner"</span>,
+    fittype=<span class="hljs-string">"curvefit"</span>,
+    tedpca=<span class="hljs-string">"mdl"</span>,
+    verbose=<span class="hljs-literal">True</span>,
+)
+</code></pre></div>
+        <img src="images/using_tedana.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">10</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light default-container present has-light-background fitted" data-background-color="#d6d5e0" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="tedana:thesoftware">tedana: the software</h4>
+
+<div class="single-image-wrapper"><img src="images/outputs.png" class=" size-contain position-center-center"></div>
+
+<p>Check out the <a href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text=MRI+Together:+Juggling%20with%20data&amp;details=https://app.gather.town/app/Rc37K6uzo6Jmgw03/mritogether22&amp;location=https://app.gather.town/app/Rc37K6uzo6Jmgw03/mritogether22&amp;dates=20221208T120000Z%2F20221208T150000Z_">Juggling with data session on Thursday at 12:00 UTC</a> for more on these.</p></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">11</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#d9d5e1" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="tedana:thecommunity">tedana: the community</h4>
+
+<p><br></p>
+
+<ul>
+<li><a href="https://tedana.readthedocs.io/"><strong>tedana</strong></a></li>
+<li>maPCA</li>
+<li>Rica</li>
+<li>Multi-echo Jupyter Book</li>
+<li>Curated lists of multi-echo posters from OHBM</li>
+<li>Other works-in-progress</li>
+</ul></div>
+        <img src="images/tedana_gh.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">12</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#ddd4e2" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="tedana:thecommunity">tedana: the community</h4>
+
+<p><br></p>
+
+<ul>
+<li>tedana</li>
+<li><a href="https://github.com/ME-ICA/mapca"><strong>maPCA</strong></a></li>
+<li>Rica</li>
+<li>Multi-echo Jupyter Book</li>
+<li>Curated lists of multi-echo posters from OHBM</li>
+<li>Other works-in-progress</li>
+</ul></div>
+        <img src="images/mapca.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">13</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#dfd5e3" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="tedana:thecommunity">tedana: the community</h4>
+
+<p><br></p>
+
+<ul>
+<li>tedana</li>
+<li>maPCA</li>
+<li><a href="https://rica-fmri.netlify.app/"><strong>Rica</strong></a></li>
+<li>Multi-echo Jupyter Book</li>
+<li>Curated lists of multi-echo posters from OHBM</li>
+<li>Other works-in-progress</li>
+</ul></div>
+        <img src="images/rica.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">14</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#e1d7e3" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="tedana:thecommunity">tedana: the community</h4>
+
+<p><br></p>
+
+<ul>
+<li>tedana</li>
+<li>maPCA</li>
+<li>Rica</li>
+<li><a href="https://me-ica.github.io/multi-echo-data-analysis/"><strong>Multi-echo Jupyter Book</strong></a></li>
+<li>Curated lists of multi-echo posters from OHBM</li>
+<li>Other works-in-progress</li>
+</ul></div>
+        <img src="images/book.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">15</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#e3d9e3" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="tedana:thecommunity">tedana: the community</h4>
+
+<p><br></p>
+
+<ul>
+<li>tedana</li>
+<li>maPCA</li>
+<li>Rica</li>
+<li>Multi-echo Jupyter Book</li>
+<li><a href="https://me-ica.github.io/#scientific-conferences"><strong>Curated lists of multi-echo posters from OHBM</strong></a></li>
+<li>Other works-in-progress</li>
+</ul></div>
+        <img src="images/me_posters.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">16</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#e5dbe3" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="tedana:thecommunity">tedana: the community</h4>
+
+<p><br></p>
+
+<ul>
+<li>tedana</li>
+<li>maPCA</li>
+<li>Rica</li>
+<li>Multi-echo Jupyter Book</li>
+<li>Curated lists of multi-echo posters from OHBM</li>
+<li><a href="https://me-ica.github.io/#works-in-progress"><strong>Other works-in-progress</strong></a></li>
+</ul></div>
+        <img src="images/work_in_progress.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">17</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light default-container present has-light-background fitted" data-background-color="#e7dce3" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="challengesdevelopingtedana">Challenges developing tedana</h4>
+
+<p><br></p>
+
+<p><br></p>
+
+<p><strong>Expertise required</strong>: software engineering, MRI physics, math/statistics, neuroscience, data visualization, project management, community management...</p>
+
+<p><br></p>
+
+<p>👉 No one in the team has all of these!</p></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">18</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light default-container present has-light-background fitted" data-background-color="#e7dce1" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="challengesdevelopingtedana">Challenges developing tedana</h4>
+
+<p><br></p>
+
+<p><br></p>
+
+<p>Neuroimaging grad students and postdocs are rarely software engineers, but their <mark>code needs to survive beyond their period of contribution</mark></p>
+
+<p><br></p>
+
+<p>👉 <strong>Documentation and testing</strong> are very important</p></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">19</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light default-container present has-light-background fitted" data-background-color="#e7dcdf" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="challengesdevelopingtedana">Challenges developing tedana</h4>
+
+<p><br></p>
+
+<p><br></p>
+
+<p><br></p>
+
+<p><em>Too big</em> for informal governance, but <em>too small</em> for most documented open source governance models</p></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">20</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#e7dcdd" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 0.953rem;">
+        <div style=""><h4 id="leadershipandgovernance">Leadership and Governance</h4>
+
+<ul>
+<li>Improvements prompted &amp; <strong>guided by <a href="https://whitaker-lab.netlify.app/">Kirstie Whitaker</a></strong></li>
+<li><strong>Acknowledge</strong> contributors' leadership &amp; <strong>minimize administrative burden</strong></li>
+<li><strong>Grow community</strong>, strive for <strong>consensus</strong>, have a path for <strong>decision making</strong></li>
+<li><strong>Support openness</strong> in both code and decision making</li>
+<li>A <strong>steering committee</strong> for project-wide steering, and <strong>focused roles</strong> for code-focused tasks</li>
+<li><strong>Code of conduct</strong> and enforcement policy (luckily, never used)</li>
+</ul></div>
+        <img src="images/governance.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">21</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light v-split-container present has-light-background fitted" data-background-color="#e8dcdc" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-v-split media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="contributingtotedana">Contributing to tedana</h4>
+
+<ul>
+<li>Code contributions</li>
+<li>New ideas for data <strong>processing</strong> and <strong>visualization</strong></li>
+<li><strong>Documentation</strong> &amp; <strong>education</strong></li>
+<li>Questions that can help us <strong>identify gaps</strong> in the code or documentation</li>
+<li>Sharing (or processing your own) datasets to help with <strong>validation and testing</strong></li>
+<li><a href="https://calendar.google.com/calendar/embed?src=pl6vb4t9fck3k6mdo2mok53iss%40group.calendar.google.com">Join monthly call!</a></li>
+</ul></div>
+        <img src="images/contributing.png" class=" size-contain position-center-center" style="">
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">22</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light default-container present has-light-background fitted" data-background-color="#e8dedc" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-default media-grid" style="width: 100%; font-size: 1rem;">
+        <div style=""><h4 id="discussionsareopen">Discussions are open</h4>
+
+<div class="single-image-wrapper"><img src="images/discussions.png" class=" size-contain position-center-center"></div></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">23</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section><section class="variable-size-headings has-footer light section-container present has-light-background fitted" data-background-color="#e8e0dd" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-section" style="width: 100%; font-size: 1rem;">
+        <div style="">
+          <h3 id="thursdayat12:00utc">Thursday at 12:00 UTC</h3>
+
+<p>Learn how to <strong>denoise your multi-echo fMRI data using tedana</strong> at the <a href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text=MRI+Together:+Juggling%20with%20data&amp;details=https://app.gather.town/app/Rc37K6uzo6Jmgw03/mritogether22&amp;location=https://app.gather.town/app/Rc37K6uzo6Jmgw03/mritogether22&amp;dates=20221208T120000Z%2F20221208T150000Z_">Juggling with data</a> session at <a href="https://mritogether.esmrmb.org/">MRI Together</a></p>
+        </div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">24</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+</section><section class="variable-size-headings has-footer light title-container present has-light-background fitted" data-background-color="#e8e2dd" data-updated="true" style="display: grid;">
+
+      <div class="header"><div class="leading"></div><div class="middle"></div><div class="trailing"></div></div>
+      <div class="layout-title" style="width: 100%; font-size: 1rem;">
+        <div style=""><h2 id="thankyou">Thank you!</h2>
+
+<p>Get in touch <a href="https://twitter.com/eurunuela">@eurunuela</a> or <a href="mailto:e.urunuela@bcbl.eu">e.urunuela@bcbl.eu</a></p></div>
+      </div>
+      <div class="footnotes"></div>
+      <div class="footer"><div class="leading">25</div><div class="middle">enekourunuela.com</div><div class="trailing"><img class="logo" src="images/logo.png"></div></div>
+      
+</section></div>
+    </div>
+    <script src="engine/index.js"></script>
+    <script src="engine/d3v4.min.js" charset="utf-8"></script>
+    <script src="engine/charts.min.js" charset="utf-8"></script>
+    <script src="engine/billboard.min.js"></script>
+    <script>
+      Reveal.configure({
+        progress: true,
+        keyboard: true,
+        dependencies: [
+          {
+            src: "engine/highlight.js",
+            sync: true,
+            callback: function () {
+              hljs.initHighlightingOnLoad();
+            },
+          },
+        ],
+      });
+    </script>
+  </body>
+</html>
